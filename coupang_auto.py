@@ -1,15 +1,19 @@
+import os
 import requests
 import openai
 import json
+import tkinter as tk
+from tkinter import messagebox
+from dotenv import load_dotenv
 from PIL import Image, ImageDraw, ImageFont
-import os
 
-# ✅ 쿠팡 API 키 설정 (실제 키로 변경해야 함)
-ACCESS_KEY = "YOUR_CUPANG_ACCESS_KEY"
-SECRET_KEY = "YOUR_CUPANG_SECRET_KEY"
+# ✅ .env 파일 로드
+load_dotenv()
 
-# ✅ GPT-3.5 API 키 설정 (실제 키로 변경해야 함)
-OPENAI_API_KEY = "YOUR_OPENAI_API_KEY"
+# ✅ API 키 가져오기
+ACCESS_KEY = os.getenv("CUPANG_ACCESS_KEY")
+SECRET_KEY = os.getenv("CUPANG_SECRET_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # ✅ 저장 폴더 생성
 output_folder = "coupang_reviews"
@@ -81,25 +85,35 @@ def create_title_image(product_name):
     image.save(image_path)
     return image_path
 
-# ✅ 실행 코드
-products = get_best_products()
+# ✅ Tkinter GUI 설정
+def run_script():
+    products = get_best_products()
 
-if products:
-    for product in products["data"]:
-        product_name = product["productName"]
-        product_url = product["productUrl"]
+    if products:
+        for product in products["data"]:
+            product_name = product["productName"]
+            product_url = product["productUrl"]
 
-        # ✅ GPT-3.5로 블로그 글 생성
-        blog_html = generate_blog_content(product_name, product_url)
+            # ✅ GPT-3.5로 블로그 글 생성
+            blog_html = generate_blog_content(product_name, product_url)
 
-        # ✅ HTML 파일 저장
-        file_path = os.path.join(output_folder, f"{product_name.replace(' ', '_')}.html")
-        with open(file_path, "w", encoding="utf-8") as file:
-            file.write(blog_html)
+            # ✅ HTML 파일 저장
+            file_path = os.path.join(output_folder, f"{product_name.replace(' ', '_')}.html")
+            with open(file_path, "w", encoding="utf-8") as file:
+                file.write(blog_html)
 
-        # ✅ 제목 이미지 생성
-        create_title_image(product_name)
+            # ✅ 제목 이미지 생성
+            create_title_image(product_name)
 
-    print("✅ 블로그 리뷰 및 제목 이미지 생성 완료!")
-else:
-    print("❌ 쿠팡 API에서 제품 데이터를 가져오지 못했습니다.")
+        messagebox.showinfo("완료!", "✅ 블로그 리뷰 및 제목 이미지 생성 완료!")
+    else:
+        messagebox.showerror("오류!", "❌ 쿠팡 API에서 데이터를 가져오지 못했습니다.")
+
+# ✅ GUI 실행
+root = tk.Tk()
+root.title("쿠팡 자동 리뷰 생성기")
+
+tk.Label(root, text="쿠팡 API 자동 리뷰 생성", font=("Arial", 14)).pack(pady=10)
+tk.Button(root, text="쿠팡 리뷰 자동 생성 시작", command=run_script, font=("Arial", 12), bg="blue", fg="white").pack(pady=20)
+
+root.mainloop()
